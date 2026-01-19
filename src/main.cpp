@@ -1,37 +1,45 @@
 #include <Arduino.h>
-#include <FastAccelStepper.h>
-
 #include "FastAccelStepper.h"
-#include "AVRStepperPins.h" // Only required for AVR controllers
 
 #define dirPinStepper    14
-#define enablePinStepper 6
-#define stepPinStepper   12
+#define enablePinStepper 23
+#define stepPinStepper   27
 
-// If using an AVR device use the definitons provided in AVRStepperPins
-//    stepPinStepper1A
-//
-// or even shorter (for 2560 the correct pin on the chosen timer is selected):
-//    stepPinStepperA
-
-FastAccelStepperEngine engine = FastAccelStepperEngine();
-FastAccelStepper* stepper = NULL;
+FastAccelStepperEngine engine;
+FastAccelStepper* stepper = nullptr;
 
 void setup() {
-   engine.init();
-   stepper = engine.stepperConnectToPin(stepPinStepper);
-   Serial.begin(115200);
-   if (stepper) {
-      stepper->setDirectionPin(dirPinStepper);
-      //stepper->setEnablePin(enablePinStepper);
-      stepper->setAutoEnable(true);
+  Serial.begin(115200);
+  delay(500);
+  Serial.println();
+  Serial.println("=== FastAccelStepper ESP32 test ===");
 
-      stepper->setSpeedInHz(500);       // 500 steps/s
-      stepper->setAcceleration(100);    // 100 steps/s²
-      stepper->move(1000);
-   }
+  engine.init();
+  Serial.println("Engine init done");
+
+  stepper = engine.stepperConnectToPin(stepPinStepper);
+  if (!stepper) {
+    Serial.println("ERROR: stepper is NULL! Check stepPinStepper and wiring.");
+    while (true) {
+      delay(1000);  // halt so we don't crash dereferencing a null pointer
+    }
+  }
+  Serial.println("Stepper connected OK");
+
+  stepper->setDirectionPin(dirPinStepper);
+  stepper->setEnablePin(enablePinStepper);
+  stepper->setAutoEnable(true);
+
+  stepper->setSpeedInHz(1000);    // try a bit faster to clearly see motion
+  stepper->setAcceleration(500);
+
+  Serial.println("Stepper configured");
 }
 
 void loop() {
-  Serial.println("Hello");
+  if (stepper && !stepper->isRunning()) {
+    Serial.println(stepper->getCurrentPosition());
+    stepper->move(2000);
+  }
+  delay(10);
 }
