@@ -14,6 +14,13 @@ void setup() {
   Serial.println();
   Serial.println("=== FastAccelStepper ESP32 test ===");
 
+  /**
+   * "s,c,x,y"
+   * s:0,1,2
+   * c:[0,5]
+   * x,y: [range]
+   */
+
   engine.init();
   Serial.println("Engine init done");
 
@@ -24,6 +31,7 @@ void setup() {
       delay(1000);  // halt so we don't crash dereferencing a null pointer
     }
   }
+  
   Serial.println("Stepper connected OK");
 
   stepper->setDirectionPin(dirPinStepper);
@@ -37,6 +45,7 @@ void setup() {
 }
 
 void loop() {
+  Serial.println("HI");
   if (stepper && !stepper->isRunning()) {
     Serial.println(stepper->getCurrentPosition());
     stepper->move(2000);
