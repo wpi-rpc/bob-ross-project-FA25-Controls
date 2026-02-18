@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "FastAccelStepper.h"
 #include <Servo.h>
+#include "esp_log.h"
 
 #define enablePinStepper 23
 
@@ -14,6 +15,12 @@
 #define servoPin1 25
 #define servoPin2 12
 
+struct command {
+  unsigned short x,y;
+  uint8_t z;
+  uint8_t colour;
+};
+
 FastAccelStepperEngine engine = FastAccelStepperEngine();
 FastAccelStepper *stepper1 = NULL;
 FastAccelStepper *stepper2 = NULL;
@@ -22,6 +29,7 @@ Servo servo2;
 
 void setup() {
   Serial.begin(115200);
+  Serial2.begin(115200, SERIAL_8N1, 16, 17);
   delay(500);
   Serial.println();
   Serial.println("=== FastAccelStepper ESP32 test ===");
@@ -63,6 +71,7 @@ void setup() {
 
 }
 
+command uart_in;
 void loop() {
   if (stepper1 && !(stepper1->isRunning())) {
     stepper1->runForward();
@@ -85,6 +94,14 @@ void loop() {
   } else {
     servo2.write(180);
   }
+
+  if (Serial2.available()) {
+    Serial2.readBytes((char*)&uart_in, sizeof(uart_in));
+    ESP_LOGI("uart_in", "(%d,%d,%d,%d)", uart_in.x, uart_in.y, uart_in.z, uart_in.colour);
+    Serial2.write(0x06);
+    ESP_LOGI("uart_out", "Acknowledged");
+  }
+  
   delay(1000);
 }
 
@@ -133,5 +150,3 @@ void loop() {
 
 // FastAccelStepperEngine engine;
 // FastAccelStepper* stepper = nullptr;
-
-
