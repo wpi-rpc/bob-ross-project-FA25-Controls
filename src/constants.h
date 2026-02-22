@@ -17,6 +17,19 @@
 #define stepsToAnlge  stepsToRevolution / (2 * M_PI)
 #define wheelRadius 10 // meters
  
+namespace GPIOPins {
+    uint8_t SERVO_Z = 0;
+    uint8_t SERVO_COLOR = 1;
+    
+    uint8_t STEPPER_X_DIR = 2;
+    uint8_t STEPPER_X_ENABLE = 3;
+    uint8_t STEPPER_X_STEP = 4;
+
+    uint8_t STEPPER_Y_DIR = 5;
+    uint8_t STEPPER_Y_ENABLE = 6;
+    uint8_t STEPPER_Y_STEP = 7;
+};
+
 enum Height {
     UP = 180,
     DOWN = 0
@@ -34,6 +47,5 @@ enum Color {
 struct Position{
     int x = 0;
     int y = 0;
-
     
 };
