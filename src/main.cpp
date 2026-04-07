@@ -54,7 +54,7 @@ void setup() {
 
 }
 
-void loop() {
+void loop() {/*
   if (stepper1 && !(stepper1->isRunning())) {
     stepper1->runForward();
     // Serial.println(stepper1->getCurrentPosition());
@@ -76,7 +76,7 @@ void loop() {
   } else {
     servo2.write(180);
   }
-  delay(1000);
+  delay(1000);*/
 }
 
 
