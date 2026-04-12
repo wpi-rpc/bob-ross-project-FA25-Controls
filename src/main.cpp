@@ -2,6 +2,7 @@
 #include "FastAccelStepper.h"
 #include <Servo.h>
 #include "constants.h"
+#include <vector>
 
 #include "esp_log.h"
 
@@ -28,8 +29,8 @@ class Stepper {
 
   void init() {
     motor = engine.stepperConnectToPin(STEPPER_PIN);
-    motor->setSpeedInHz(1000);
-    motor->setAcceleration(500);
+    motor->setSpeedInHz(200);
+    motor->setAcceleration(50);
     motor->setDirectionPin(DIR_PIN);
     motor->setEnablePin(EN_PIN);
     motor->setAutoEnable(true);
@@ -77,7 +78,7 @@ class Gantry {
   Servo servo_color = Servo();
 
   // other params 
-  double max_acceleration = 1; 
+  double max_acceleration = 10; 
 
 
   public: 
@@ -112,6 +113,8 @@ class Gantry {
     motor_y.setAcceleration(accel_dy);
     motor_x.moveTo(x_cm);
     motor_y.moveTo(y_cm);
+
+    while(motor_x.isRunning() || motor_y.isRunning()) {}
   }
 
   void movePen(int penDown) {
@@ -144,8 +147,57 @@ void setup() {
   
 }
 
+struct Command {
+    double x;
+    double y;
+    double p; // 1 for down, 0 for up
+};
+
+// Generates smooth arc points between two angles
+void addArc(std::vector<Command>& list, float cx, float cy, float r, float startDeg, float endDeg, int points = 12) {
+    for (int i = 0; i <= points; ++i) {
+        float angle = (startDeg + (endDeg - startDeg) * (i / (float)points)) * (M_PI / 180.0f);
+        list.push_back({cx + r * cos(angle), cy + r * sin(angle), 1});
+    }
+}
+
+struct Step {
+    float x;
+    float y;
+    int pen; // 1 = down, 0 = up
+};
+
 command uart_in;
 void loop() {
+  // Data list representing the Smiley Face drawing
+  // --- LETTER R ---
+  std::vector<Step> path = {
+        // --- LETTER R ---
+        {0.5, 1.0, 0}, {0.5, 5.0, 1}, // Stem
+        {1.5, 5.0, 1}, {1.8, 4.0, 1}, // Top
+        {1.5, 3.0, 1}, {0.5, 3.0, 1}, // Mid-bar
+        {1.2, 3.0, 0}, {1.8, 1.0, 1}, // Leg
+        
+        // --- LETTER P ---
+        {2.2, 1.0, 0}, {2.2, 5.0, 1}, // Stem
+        {3.2, 5.0, 1}, {3.5, 4.0, 1}, // Top
+        {3.2, 3.0, 1}, {2.2, 3.0, 1}, // Mid-bar
+        
+        // --- LETTER C ---
+        {5.5, 4.5, 0}, {4.8, 5.0, 1}, // Top curve
+        {4.2, 4.5, 1}, {4.2, 1.5, 1}, // Back wall
+        {4.8, 1.0, 1}, {5.5, 1.5, 1}  // Bottom curve
+    };
+    // Execution Loop
+    for (const auto& cmd : path) {
+      gantry.movePen((int)cmd.pen);
+      gantry.move(4.0*cmd.x, 4.0*cmd.y);  
+    }
+
+    while(1);
+
+
+
     if (Serial2.available()) {
         Serial2.readBytes((char*)&uart_in, sizeof(uart_in));
         ESP_LOGI("uart_in", "(%d,%d,%d,%d)", uart_in.x, uart_in.y, uart_in.z, uart_in.colour);
